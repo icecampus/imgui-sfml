@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 project(imgui_sfml VERSION 3.0.0 LANGUAGES CXX)
+set (CMAKE_CXX_STANDARD 17)
 
 option(IMGUI_SFML_FIND_SFML "Use find_package to find SFML" ON)
 option(IMGUI_SFML_ENABLE_WARNINGS "Enable compiler warnings" OFF)
@@ -24,32 +25,32 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 if(IMGUI_SFML_FIND_SFML)
   if(NOT BUILD_SHARED_LIBS)
-    set(SFML_STATIC_LIBRARIES ON)
+    set(SFML_STATIC_LIBRARIES OFF)
   endif()
-  find_package(SFML 3 REQUIRED COMPONENTS Graphics)
+    find_package(SFML COMPONENTS System Graphics CONFIG REQUIRED)
 endif()
 
 # ImGui does not provide native support for CMakeLists, workaround for now to have
 # users specify IMGUI_DIR. Waiting for this PR to get merged...
 #    https://github.com/ocornut/imgui/pull/1713
-if(NOT IMGUI_DIR)
-  set(IMGUI_DIR "" CACHE PATH "imgui top-level directory")
-  message(FATAL_ERROR "ImGui directory not found. Set IMGUI_DIR to imgui's top-level path (containing 'imgui.h' and other files).\n")
-endif()
+# if(NOT IMGUI_DIR)
+#   set(IMGUI_DIR "" CACHE PATH "imgui top-level directory")
+#   message(FATAL_ERROR "ImGui directory not found. Set IMGUI_DIR to imgui's top-level path (containing 'imgui.h' and other files).\n")
+# endif()
 
 # This uses FindImGui.cmake provided in ImGui-SFML repo for now
-find_package(ImGui 1.91.1 REQUIRED)
+find_package(ImGui CONFIG REQUIRED)
 
 # These headers will be installed alongside ImGui-SFML
-set(IMGUI_PUBLIC_HEADERS
-  ${IMGUI_INCLUDE_DIR}/imconfig.h
-  ${IMGUI_INCLUDE_DIR}/imgui.h
-  ${IMGUI_INCLUDE_DIR}/imgui_internal.h # not actually public, but users might need it
-  ${IMGUI_INCLUDE_DIR}/imstb_rectpack.h
-  ${IMGUI_INCLUDE_DIR}/imstb_textedit.h
-  ${IMGUI_INCLUDE_DIR}/imstb_truetype.h
-  ${IMGUI_INCLUDE_DIR}/misc/cpp/imgui_stdlib.h
-)
+# set(IMGUI_PUBLIC_HEADERS
+#   ${IMGUI_INCLUDE_DIR}/imconfig.h
+#   ${IMGUI_INCLUDE_DIR}/imgui.h
+#   ${IMGUI_INCLUDE_DIR}/imgui_internal.h # not actually public, but users might need it
+#   ${IMGUI_INCLUDE_DIR}/imstb_rectpack.h
+#   ${IMGUI_INCLUDE_DIR}/imstb_textedit.h
+#   ${IMGUI_INCLUDE_DIR}/imstb_truetype.h
+#   ${IMGUI_INCLUDE_DIR}/misc/cpp/imgui_stdlib.h
+# )
 
 # CMake 3.11 and later prefer to choose GLVND, but we choose legacy OpenGL just because it's safer
 # (unless the OpenGL_GL_PREFERENCE was explicitly set)
@@ -70,7 +71,7 @@ target_include_directories(ImGui-SFML PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-target_link_libraries(ImGui-SFML PUBLIC SFML::Graphics OpenGL::GL)
+target_link_libraries(ImGui-SFML PUBLIC SFML::System SFML::Graphics imgui::imgui OpenGL::GL)
 if(WIN32 AND MINGW)
   target_link_libraries(ImGui-SFML PUBLIC imm32)
 endif()
@@ -141,7 +142,7 @@ if(NOT PROJECT_IS_TOP_LEVEL)
   return()
 endif()
 
-option(IMGUI_SFML_BUILD_EXAMPLES "Build ImGui-SFML examples" OFF)
+option(IMGUI_SFML_BUILD_EXAMPLES "Build ImGui-SFML examples" ON)
 if(IMGUI_SFML_BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()
